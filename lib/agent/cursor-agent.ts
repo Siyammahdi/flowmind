@@ -14,7 +14,10 @@ import { sanitizePublicText } from "@/lib/agent/sanitize";
 import { WEBFLOW_AGENT_SYSTEM_PROMPT } from "@/lib/agent/system-prompt";
 import type { ActivityEvent } from "@/lib/agent/types";
 import { resolveToolName } from "@/lib/agent/tool-copy";
-import { getWebflowMcpServer } from "@/lib/mcp/webflow";
+import {
+  getWebflowMcpServersCloud,
+  getWebflowMcpServersLocal,
+} from "@/lib/mcp/webflow";
 import { getWebflowToken } from "@/lib/webflow/auth-store";
 
 const DEFAULT_TIMEOUT_MS = 180_000;
@@ -73,6 +76,10 @@ async function disposeAgent(agent: SDKAgent | undefined): Promise<void> {
   }
 }
 
+function isVercel(): boolean {
+  return Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
+}
+
 export async function runWebflowAgent({
   prompt,
   site,
@@ -104,28 +111,47 @@ export async function runWebflowAgent({
   let agent: SDKAgent | undefined;
   let timedOut = false;
 
+  const useCloud = isVercel();
+
   try {
-    agent = await Agent.create({
-      apiKey,
-      model: { id: process.env.CURSOR_MODEL?.trim() || "composer-2.5" },
-      name: "Flowmind Webflow Agent",
-      local: { cwd: process.cwd() },
-      mcpServers: await getWebflowMcpServer(),
-      tools: [
-        "mcp",
-        "getMcpTools",
-        "listMcpResources",
-        "readMcpResource",
-        "mcpAuth",
-        "askQuestion",
-        "fetch",
-      ],
-    });
+    if (useCloud) {
+      const mcpServers = await getWebflowMcpServersCloud();
+      agent = await Agent.create({
+        apiKey,
+        model: { id: process.env.CURSOR_MODEL?.trim() || "composer-2.5" },
+        name: "Flowmind Webflow Agent",
+        cloud: {
+          envVars: {
+            WEBFLOW_TOKEN: webflowToken,
+          },
+        },
+        mcpServers,
+      });
+    } else {
+      const mcpServers = await getWebflowMcpServersLocal();
+      agent = await Agent.create({
+        apiKey,
+        model: { id: process.env.CURSOR_MODEL?.trim() || "composer-2.5" },
+        name: "Flowmind Webflow Agent",
+        local: { cwd: process.cwd() },
+        mcpServers,
+        tools: [
+          "mcp",
+          "getMcpTools",
+          "listMcpResources",
+          "readMcpResource",
+          "mcpAuth",
+          "askQuestion",
+          "fetch",
+        ],
+      });
+    }
 
     const run = await agent.send(composePrompt(prompt, site));
     console.info("[flowmind] agent started", {
       agentId: agent.agentId,
       runId: run.id,
+      runtime: useCloud ? "cloud" : "local",
     });
 
     const timeout = setTimeout(() => {

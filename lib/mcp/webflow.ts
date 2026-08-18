@@ -14,7 +14,33 @@ function processEnv(): Record<string, string> {
   return env;
 }
 
-export async function getWebflowMcpServer(): Promise<
+export async function getWebflowMcpServersCloud(): Promise<
+  Record<string, McpServerConfig>
+> {
+  const token = await getWebflowToken();
+  const url = process.env.WEBFLOW_MCP_URL?.trim() || DEFAULT_WEBFLOW_MCP_URL;
+
+  const servers: Record<string, McpServerConfig> = {
+    webflow: {
+      type: "sse",
+      url,
+    },
+  };
+
+  if (token) {
+    servers["webflow-api"] = {
+      type: "sse",
+      url,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+  }
+
+  return servers;
+}
+
+export async function getWebflowMcpServersLocal(): Promise<
   Record<string, McpServerConfig>
 > {
   const token = await getWebflowToken();
