@@ -1,21 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import {
-  CheckIcon,
-  SparklesIcon,
-  TriangleAlertIcon,
-} from "lucide-react";
+import { CheckIcon, TriangleAlertIcon } from "lucide-react";
 
 import { AgentMarkdown } from "@/components/agent/agent-markdown";
 import { ThinkingStatus } from "@/components/agent/thinking-status";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
@@ -24,12 +14,13 @@ import type { ActivityEvent } from "@/lib/agent/types";
 type ActivityLogProps = {
   events: ActivityEvent[];
   running: boolean;
+  siteName?: string;
 };
 
-function ToolBar({ event }: { event: ActivityEvent }) {
+function ToolStep({ event }: { event: ActivityEvent }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg bg-muted px-2.5 py-1.5">
-      <span className="flex size-3.5 shrink-0 items-center justify-center text-muted-foreground [&_svg]:size-3">
+    <div className="flex items-start gap-3">
+      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-muted">
         {event.state === "running" ? (
           <Spinner className="size-3" />
         ) : event.state === "error" ? (
@@ -38,20 +29,27 @@ function ToolBar({ event }: { event: ActivityEvent }) {
           <CheckIcon className="size-3" />
         )}
       </span>
-      <span
-        className={cn(
-          "text-[12px] leading-4 text-muted-foreground",
-          event.state === "running" && "thinking-shimmer",
-          event.state === "error" && "text-destructive",
-        )}
-      >
-        {event.label}
-      </span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span
+          className={cn(
+            "text-sm leading-6",
+            event.state === "running" && "thinking-shimmer",
+            event.state === "error" && "text-destructive",
+          )}
+        >
+          {event.label}
+        </span>
+        {event.detail ? (
+          <span className="text-xs leading-5 text-muted-foreground">
+            {event.detail}
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 }
 
-export function ActivityLog({ events, running }: ActivityLogProps) {
+export function ActivityLog({ events, running, siteName }: ActivityLogProps) {
   const endRef = useRef<HTMLDivElement>(null);
   const visibleEvents = events.filter((event, index) => {
     if (event.kind !== "tool") {
@@ -65,87 +63,87 @@ export function ActivityLog({ events, running }: ActivityLogProps) {
     );
   });
 
-  const userEvents = visibleEvents.filter((event) => event.kind === "user");
+  const task = visibleEvents.find((event) => event.kind === "user");
+  const statusEvents = visibleEvents.filter((event) => event.kind === "status");
   const toolEvents = visibleEvents.filter((event) => event.kind === "tool");
   const assistantEvents = visibleEvents.filter(
     (event) => event.kind === "assistant",
   );
   const otherEvents = visibleEvents.filter(
-    (event) =>
-      event.kind === "error" || event.kind === "success",
+    (event) => event.kind === "error" || event.kind === "success",
   );
   const activeTool = toolEvents.find((event) => event.state === "running");
+  const success = otherEvents.find((event) => event.kind === "success");
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [events, running]);
 
-  if (events.length === 0) {
-    return (
-      <Empty className="h-full border-0">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <SparklesIcon />
-          </EmptyMedia>
-          <EmptyTitle>What should we change in Webflow?</EmptyTitle>
-          <EmptyDescription>
-            Connect a site, then ask Flowmind to inspect pages, restyle a
-            section, or make a precise layout change.
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
-    );
-  }
-
   return (
     <ScrollArea className="h-full">
-      <ol className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
-        {userEvents.map((event) => (
-          <li key={event.id} className="flex justify-end">
-            <div className="max-w-[80%] rounded-2xl bg-muted px-4 py-3 text-sm leading-6">
-              {event.label}
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-40 pt-6">
+        {task ? (
+          <section className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                Task
+              </p>
+              {siteName ? (
+                <Badge variant="outline">{siteName}</Badge>
+              ) : null}
             </div>
-          </li>
-        ))}
+            <h2 className="text-xl font-medium tracking-tight leading-7">
+              {task.label}
+            </h2>
+          </section>
+        ) : null}
 
-        {toolEvents.length > 0 ? (
-          <li className="flex flex-col gap-1">
-            {toolEvents.map((event) => (
-              <ToolBar key={event.id} event={event} />
+        <section className="flex flex-col gap-3">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Agent
+          </p>
+          <div className="flex flex-col gap-3">
+            {statusEvents.map((event) => (
+              <p key={event.id} className="text-sm text-muted-foreground">
+                {event.label}
+                {event.detail ? ` · ${event.detail}` : ""}
+              </p>
             ))}
-          </li>
-        ) : null}
+            {toolEvents.map((event) => (
+              <ToolStep key={event.id} event={event} />
+            ))}
+            {running ? (
+              <ThinkingStatus running toolLabel={activeTool?.label} />
+            ) : null}
+          </div>
+        </section>
 
-        {running ? (
-          <li>
-            <ThinkingStatus running toolLabel={activeTool?.label} />
-          </li>
-        ) : null}
-
-        {assistantEvents.map((event) => (
-          <li key={event.id} className="flex gap-3">
-            <div className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground [&_svg]:size-3">
-              <SparklesIcon />
+        {assistantEvents.length > 0 || otherEvents.length > 0 ? (
+          <section className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                Result
+              </p>
+              {success ? (
+                <Badge variant="secondary">{success.label}</Badge>
+              ) : null}
             </div>
-            <div className="min-w-0 flex-1">
-              <AgentMarkdown content={event.label} />
-            </div>
-          </li>
-        ))}
-
-        {otherEvents.map((event) => (
-          <li
-            key={event.id}
-            className={cn(
-              "text-xs text-muted-foreground",
-              event.kind === "error" && "text-destructive",
-            )}
-          >
-            {event.label}
-          </li>
-        ))}
+            {assistantEvents.map((event) => (
+              <div key={event.id} className="text-[15px] leading-8">
+                <AgentMarkdown content={event.label} />
+              </div>
+            ))}
+            {otherEvents
+              .filter((event) => event.kind === "error")
+              .map((event) => (
+                <p key={event.id} className="text-sm text-destructive">
+                  {event.label}
+                </p>
+              ))}
+          </section>
+        ) : null}
         <div ref={endRef} />
-      </ol>
+      </div>
     </ScrollArea>
   );
 }

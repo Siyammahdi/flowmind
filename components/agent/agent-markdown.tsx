@@ -33,10 +33,11 @@ export function AgentMarkdown({ content }: { content: string }) {
   }
 
   return (
-    <ul className="flex flex-col gap-2 pl-5 text-sm leading-6">
+    <ul className="flex flex-col gap-3 pl-0 text-[15px] leading-8">
       {items.map((item, index) => (
-        <li key={index} className="list-disc">
-          {renderInline(item, `b-${index}`)}
+        <li key={index} className="flex gap-3">
+          <span className="mt-3 size-1 shrink-0 rounded-full bg-primary" />
+          <span>{renderInline(item, `b-${index}`)}</span>
         </li>
       ))}
     </ul>

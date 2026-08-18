@@ -8,6 +8,10 @@ export type WebflowAuthRecord = {
   token: string;
   connectedAt: string;
   siteCount?: number;
+  user?: {
+    name: string;
+    email?: string;
+  };
 };
 
 export async function readWebflowAuth(): Promise<WebflowAuthRecord | null> {

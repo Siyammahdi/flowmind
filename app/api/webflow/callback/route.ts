@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 
 import { saveWebflowAuth } from "@/lib/webflow/auth-store";
 import { exchangeWebflowCode } from "@/lib/webflow/oauth";
-import { fetchWebflowSites } from "@/lib/webflow/sites";
+import { fetchWebflowSites, fetchWebflowUser } from "@/lib/webflow/sites";
 
 export const runtime = "nodejs";
 
@@ -24,11 +24,15 @@ export async function GET(request: NextRequest) {
 
   try {
     const token = await exchangeWebflowCode(code);
-    const sites = await fetchWebflowSites(token);
+    const [sites, user] = await Promise.all([
+      fetchWebflowSites(token),
+      fetchWebflowUser(token),
+    ]);
     await saveWebflowAuth({
       token,
       connectedAt: new Date().toISOString(),
       siteCount: sites.length,
+      user,
     });
     return Response.redirect(`${origin}/?webflow=connected`);
   } catch (cause) {

@@ -3,6 +3,11 @@ export type WebflowSiteSummary = {
   displayName: string;
 };
 
+export type WebflowUserSummary = {
+  name: string;
+  email?: string;
+};
+
 export function normalizeWebflowToken(raw: string): string {
   return raw
     .trim()
@@ -19,7 +24,7 @@ function messageForStatus(status: number, bodyText: string): string {
   }
 
   if (status === 401) {
-    return "Webflow rejected this token. Use a Site API token from Site settings → Apps & integrations → API access, not a Workspace API token.";
+    return "Webflow rejected this login. Log in with Webflow again, or use a Site API token from Site settings → Apps & integrations → API access.";
   }
 
   return "Unable to read Webflow sites with this token.";
@@ -62,4 +67,35 @@ export async function fetchWebflowSites(
       id: site.id as string,
       displayName: site.displayName || site.shortName || "Untitled site",
     }));
+}
+
+export async function fetchWebflowUser(
+  token: string,
+): Promise<WebflowUserSummary | undefined> {
+  const response = await fetch("https://api.webflow.com/v2/token/authorized_by", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      accept: "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return undefined;
+  }
+
+  const body = (await response.json()) as {
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  const name = [body.firstName, body.lastName].filter(Boolean).join(" ").trim();
+  if (!name && !body.email) {
+    return undefined;
+  }
+
+  return {
+    name: name || body.email || "Webflow account",
+    email: body.email,
+  };
 }

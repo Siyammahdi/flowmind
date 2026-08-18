@@ -55,17 +55,7 @@ If requests fail with an invalid-key error, check for extra whitespace and confi
 
 ## Webflow authentication
 
-Flowmind will not call Webflow until an account is connected in the UI.
-
-### Option A: API token (works for any account)
-
-1. Create a token in the [Webflow API Playground](https://developers.webflow.com/data/reference/token/authorized-by).
-2. In Flowmind, click **Connect Webflow** and paste the token.
-3. The sidebar should list that account’s sites.
-
-The token is stored on the server in `.data/webflow-auth.json` (gitignored). The agent then starts the official `webflow-mcp-server` with `WEBFLOW_TOKEN`.
-
-### Option B: OAuth (any account, in-browser)
+Log in with Webflow in the app. That uses a Data Client OAuth app so Flowmind can see the sites on your account.
 
 Create a Webflow **Data Client** app, then set:
 
@@ -75,7 +65,9 @@ WEBFLOW_CLIENT_SECRET=
 WEBFLOW_REDIRECT_URI=http://localhost:3000/api/webflow/callback
 ```
 
-Add the same redirect URI in the Webflow app settings. Restart the server. **Continue with Webflow** appears in the connect dialog.
+Add the same redirect URI in the Webflow app settings, with `sites:read`, `sites:write`, `pages:read`, `pages:write`, `cms:read`, `cms:write`, and `authorized_user:read`. Restart the server, then click **Log in with Webflow**.
+
+A site API token still works as a fallback from the connect screen.
 
 Set `WEBFLOW_MCP_TRANSPORT=http` only if you want the remote MCP URL with a bearer token instead of the official local MCP server.
 

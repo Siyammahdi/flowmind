@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowUpIcon } from "lucide-react";
+import { PlayIcon } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
-  InputGroupButton,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
@@ -25,18 +25,18 @@ export function PromptInput({
 }: PromptInputProps) {
   return (
     <form
-      className="flex flex-col gap-3"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit();
       }}
     >
-      <InputGroup className="min-h-24 rounded-2xl border-border bg-background shadow-sm">
+      <InputGroup className="min-h-20 rounded-2xl bg-muted py-1 shadow-none">
         <InputGroupTextarea
           value={value}
           disabled={running}
-          rows={3}
-          placeholder="Ask Flowmind to inspect or edit a Webflow site"
+          rows={2}
+          placeholder="Describe a change for this Webflow project"
+          className="px-4 pt-3 text-base leading-6"
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
@@ -44,17 +44,19 @@ export function PromptInput({
               onSubmit();
             }
           }}
-        />
+        />yky
         <InputGroupAddon align="block-end" className="justify-end px-2 pb-2">
-          <InputGroupButton
+          <Button
             type="submit"
-            variant="default"
-            size="sm"
             disabled={running || value.trim().length === 0}
           >
-            {running ? <Spinner data-icon="inline-start" /> : <ArrowUpIcon data-icon="inline-start" />}
-            {running ? "Working" : "Send"}
-          </InputGroupButton>
+            {running ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <PlayIcon data-icon="inline-start" />
+            )}
+            {running ? "Working" : "Run agent"}
+          </Button>
         </InputGroupAddon>
       </InputGroup>
     </form>

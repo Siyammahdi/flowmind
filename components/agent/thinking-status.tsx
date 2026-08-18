@@ -5,11 +5,10 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const PHASES = [
-  "Thinking",
-  "Understanding the request",
-  "Analyzing the Webflow project",
-  "Planning the next step",
-  "Waiting for tools",
+  "Starting the agent",
+  "Reading the Webflow project",
+  "Planning the change",
+  "Waiting for Webflow tools",
 ];
 
 export function ThinkingStatus({

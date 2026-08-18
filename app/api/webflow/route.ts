@@ -1,8 +1,9 @@
 import { AgentRequestError } from "@/lib/agent/errors";
-import { getWebflowToken } from "@/lib/webflow/auth-store";
+import { getWebflowToken, readWebflowAuth } from "@/lib/webflow/auth-store";
 import { isWebflowOAuthConfigured } from "@/lib/webflow/oauth";
 import {
   fetchWebflowSites,
+  fetchWebflowUser,
   normalizeWebflowToken,
 } from "@/lib/webflow/sites";
 
@@ -15,15 +16,21 @@ export async function GET() {
       connected: false,
       oauthEnabled: isWebflowOAuthConfigured(),
       sites: [],
+      user: null,
     });
   }
 
   try {
-    const sites = await fetchWebflowSites(token);
+    const stored = await readWebflowAuth();
+    const [sites, user] = await Promise.all([
+      fetchWebflowSites(token),
+      stored?.user ?? fetchWebflowUser(token),
+    ]);
     return Response.json({
       connected: true,
       oauthEnabled: isWebflowOAuthConfigured(),
       sites,
+      user: user ?? null,
     });
   } catch (error) {
     const message =
@@ -35,6 +42,7 @@ export async function GET() {
         connected: false,
         oauthEnabled: isWebflowOAuthConfigured(),
         sites: [],
+        user: null,
         message,
       },
       { status: 401 },
@@ -67,13 +75,17 @@ export async function POST(request: Request) {
 
   try {
     const { saveWebflowAuth } = await import("@/lib/webflow/auth-store");
-    const sites = await fetchWebflowSites(token);
+    const [sites, user] = await Promise.all([
+      fetchWebflowSites(token),
+      fetchWebflowUser(token),
+    ]);
     await saveWebflowAuth({
       token,
       connectedAt: new Date().toISOString(),
       siteCount: sites.length,
+      user,
     });
-    return Response.json({ connected: true, sites });
+    return Response.json({ connected: true, sites, user: user ?? null });
   } catch (error) {
     const mapped =
       error instanceof AgentRequestError
@@ -88,5 +100,5 @@ export async function POST(request: Request) {
 export async function DELETE() {
   const { clearWebflowAuth } = await import("@/lib/webflow/auth-store");
   await clearWebflowAuth();
-  return Response.json({ connected: false, sites: [] });
+  return Response.json({ connected: false, sites: [], user: null });
 }

@@ -33,6 +33,19 @@ export async function POST(request: Request) {
       ? body.prompt.trim()
       : "";
 
+  const site =
+    typeof body === "object" &&
+    body !== null &&
+    "site" in body &&
+    typeof body.site === "object" &&
+    body.site !== null &&
+    "id" in body.site &&
+    "displayName" in body.site &&
+    typeof body.site.id === "string" &&
+    typeof body.site.displayName === "string"
+      ? { id: body.site.id, displayName: body.site.displayName }
+      : undefined;
+
   if (!prompt) {
     return Response.json(
       {
@@ -50,6 +63,7 @@ export async function POST(request: Request) {
       try {
         const result = await runWebflowAgent({
           prompt,
+          site,
           onEvent: (event) => {
             controller.enqueue(encodeEvent({ type: "activity", event }));
           },

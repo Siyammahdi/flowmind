@@ -21,6 +21,7 @@ const DEFAULT_TIMEOUT_MS = 180_000;
 
 export type RunWebflowAgentOptions = {
   prompt: string;
+  site?: { id: string; displayName: string };
   onEvent: (event: ActivityEvent) => void;
 };
 
@@ -42,9 +43,21 @@ function requireApiKey(): string {
   return apiKey;
 }
 
-function composePrompt(userPrompt: string): string {
-  return `${WEBFLOW_AGENT_SYSTEM_PROMPT}
+function composePrompt(
+  userPrompt: string,
+  site?: { id: string; displayName: string },
+): string {
+  const siteBlock = site
+    ? `
+Target Webflow site:
+- name: ${site.displayName}
+- id: ${site.id}
+Work on this site unless the user names another.
+`
+    : "";
 
+  return `${WEBFLOW_AGENT_SYSTEM_PROMPT}
+${siteBlock}
 User request:
 ${userPrompt}`;
 }
@@ -62,6 +75,7 @@ async function disposeAgent(agent: SDKAgent | undefined): Promise<void> {
 
 export async function runWebflowAgent({
   prompt,
+  site,
   onEvent,
 }: RunWebflowAgentOptions): Promise<RunWebflowAgentResult> {
   const apiKey = requireApiKey();
@@ -108,7 +122,7 @@ export async function runWebflowAgent({
       ],
     });
 
-    const run = await agent.send(composePrompt(prompt));
+    const run = await agent.send(composePrompt(prompt, site));
     console.info("[flowmind] agent started", {
       agentId: agent.agentId,
       runId: run.id,
