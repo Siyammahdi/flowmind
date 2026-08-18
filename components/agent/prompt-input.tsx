@@ -30,7 +30,7 @@ export function PromptInput({
         onSubmit();
       }}
     >
-      <InputGroup className="min-h-20 rounded-2xl bg-muted py-1 shadow-none">
+      <InputGroup className="min-h-20 rounded-2xl bg-muted py-1 shadow-none backdrop-blur-sm">
         <InputGroupTextarea
           value={value}
           disabled={running}
@@ -44,7 +44,7 @@ export function PromptInput({
               onSubmit();
             }
           }}
-        />yky
+        />
         <InputGroupAddon align="block-end" className="justify-end px-2 pb-2">
           <Button
             type="submit"
