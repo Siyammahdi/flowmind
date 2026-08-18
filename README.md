@@ -62,10 +62,26 @@ Create a Webflow **Data Client** app, then set:
 ```env
 WEBFLOW_CLIENT_ID=
 WEBFLOW_CLIENT_SECRET=
-WEBFLOW_REDIRECT_URI=http://localhost:3000/api/webflow/callback
+WEBFLOW_REDIRECT_URI=https://flowmind-xi.vercel.app/api/webflow/callback
 ```
 
-Add the same redirect URI in the Webflow app settings, with `sites:read`, `sites:write`, `pages:read`, `pages:write`, `cms:read`, `cms:write`, and `authorized_user:read`. Restart the server, then click **Log in with Webflow**.
+Webflow only allows one redirect URI. Use the deployed callback URL. Local “Log in with Webflow” sends you through that same production URL so cookies and the callback stay in sync.
+
+Enable at least these scopes on the app (your app already has them):
+
+```text
+authorized_user:read
+sites:read
+sites:write
+pages:read
+pages:write
+cms:read
+cms:write
+assets:read
+assets:write
+```
+
+Also set `WEBFLOW_CLIENT_ID`, `WEBFLOW_CLIENT_SECRET`, and `WEBFLOW_REDIRECT_URI` in Vercel environment variables, then redeploy.
 
 A site API token still works as a fallback from the connect screen.
 

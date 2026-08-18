@@ -128,12 +128,13 @@ export function AgentPanel() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const status = params.get("webflow");
+    const reason = params.get("reason");
     if (status) {
       window.history.replaceState({}, "", "/");
       if (status === "connected") {
         toast.success("Logged in with Webflow");
       } else if (status === "error") {
-        toast.error("Webflow login failed. Try again.");
+        toast.error(reason || "Webflow login failed. Try again.");
       } else if (status === "setup") {
         toast.error(
           "Webflow login is not configured yet. Use a site token, or add a Webflow Data Client in .env.local.",

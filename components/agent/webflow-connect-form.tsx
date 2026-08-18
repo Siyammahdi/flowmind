@@ -68,8 +68,8 @@ export function WebflowConnectForm({
         Log in with Webflow
       </a>
       <p className="text-sm leading-6 text-muted-foreground">
-        Opens your Webflow account so the agent can access the projects you
-        authorize.
+        Sign in with your Webflow profile and pick the sites the agent can
+        edit. Completes on the deployed Flowmind URL.
       </p>
       <FieldSeparator>or</FieldSeparator>
       {showToken ? (
