@@ -1,6 +1,6 @@
 "use client";
 
-import { PlayIcon } from "lucide-react";
+import { PlayIcon, SquareIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,7 @@ type PromptInputProps = {
   running: boolean;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  onStop: () => void;
 };
 
 export function PromptInput({
@@ -22,12 +23,17 @@ export function PromptInput({
   running,
   onChange,
   onSubmit,
+  onStop,
 }: PromptInputProps) {
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit();
+        if (running) {
+          onStop();
+        } else {
+          onSubmit();
+        }
       }}
     >
       <InputGroup className="min-h-20 rounded-2xl bg-muted py-1 shadow-none backdrop-blur-sm">
@@ -41,22 +47,29 @@ export function PromptInput({
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
-              onSubmit();
+              if (running) {
+                onStop();
+              } else {
+                onSubmit();
+              }
             }
           }}
         />
         <InputGroupAddon align="block-end" className="justify-end px-2 pb-2">
-          <Button
-            type="submit"
-            disabled={running || value.trim().length === 0}
-          >
-            {running ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
+          {running ? (
+            <Button type="submit" variant="destructive">
+              <SquareIcon data-icon="inline-start" />
+              Stop
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              disabled={value.trim().length === 0}
+            >
               <PlayIcon data-icon="inline-start" />
-            )}
-            {running ? "Working" : "Run agent"}
-          </Button>
+              Run agent
+            </Button>
+          )}
         </InputGroupAddon>
       </InputGroup>
     </form>
